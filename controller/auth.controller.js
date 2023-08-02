@@ -2,6 +2,8 @@ const  { StatusCodes }  = require('http-status-codes')
 const User = require('../model/user.model')
 const bcrypt = require('bcryptjs')
 const createAccessToken = require('../util/token')
+const jwt = require('jsonwebtoken')
+
 // register 
 const register = async (req,res) => {
     try {
@@ -52,6 +54,14 @@ const login = async (req,res) => {
         //generate token
         const accessToken = createAccessToken({_id:extUser._id})
 
+        //store a copy of access token in cookies
+        res.cookie("loginToken", accessToken,{
+            httpOnly:true,
+            signed:true,
+            path:'/api/auth/getToken',
+            maxAge: 1*24*60*60*1000
+        })
+
         res.status(StatusCodes.OK).json({msg:"Login Successful", accessToken})
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: err.message })
@@ -61,6 +71,9 @@ const login = async (req,res) => {
 // logout
 const logout = async (req,res) => {
     try {
+        res.clearCookie('loginToken',{
+            path:'/api/auth/getToken'
+        })
         res.status(StatusCodes.OK).json({ msg: "logout"})
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: err.message })
@@ -70,7 +83,18 @@ const logout = async (req,res) => {
 // token
 const getToken = async (req,res) => {
     try {
-        res.status(StatusCodes.OK).json({ msg: "get token"})
+        const fToken = req.signedCookies.loginToken
+
+        //token verification logic
+        jwt.verify(fToken,process.env.API_ACCESS_SECRET,(err,resp) => {
+            if(err)
+                return res.status(StatusCodes.UNAUTHORIZED).json({msg: 'Unauthorized, invalid Login Token'})
+                
+                // const accessToken = createAccessToken({_id:resp._id})
+
+                res.status(StatusCodes.OK).json({accessToken: fToken})
+        })
+        // res.status(StatusCodes.OK).json({ msg: fToken})
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: err.message })
     }
@@ -79,7 +103,11 @@ const getToken = async (req,res) => {
 // current logged user info
 const loggedUser = async (req,res) => {
     try {
-        res.status(StatusCodes.OK).json({ msg: "logged user"})
+        let user = await User.findById({_id : req.userId}).select('-password')
+            if(!user)
+                return res.status(StatusCodes.NOT_FOUND).json({ msg: 'Requested user id not found'})
+        
+        res.status(StatusCodes.OK).json({user})
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: err.message })
     }
