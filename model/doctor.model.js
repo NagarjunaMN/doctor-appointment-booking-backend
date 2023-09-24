@@ -23,21 +23,34 @@ const doctorSchema = new mongoose.Schema({
       },
       doctorId: {
         type: String,
-        default: "user",
-        enum: ["user", "doctor", "admin"]
+        default: "",
+        unique: true
+        // default: "user",
+        // enum: ["user", "doctor", "admin"]
       },
       
       department: {
-        type: Object,
-        default: {}
+        type: String, 
+        default: ""
       },
       qualification: {
-        type: Boolean,
-        default: true
+        type: String,
+        default: ""
       },
-      description:{},
-      experiance: {},
-      address: {}
+      description:{
+        type: String,
+        default: ""
+      },
+      experience: {
+        type: Number,
+        default: 0
+      },
+      address: {
+        type: Object,
+        default: {
+          city: "test city"
+        }
+      }
 },{
     collection: "doctors",
     timestamps: true
