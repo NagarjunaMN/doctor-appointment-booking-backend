@@ -2,14 +2,19 @@ const slotRoute = require('express').Router()
 const { getSlots, getSingle, createSlot, updateSlot, deleteSlot } = require('../controller/slot.controller')
 const { create } = require('../model/slot.model')
 
-slotRoute.get(`/all`,getSlots)
+//validate login authentication
+const auth = require('../middleware/auth.middleware')
+const doctorAuth = require('../middleware/doctor.role')
 
-slotRoute.get(`/single/:id`,getSingle)
 
-slotRoute.post(`/create`,createSlot)
+slotRoute.get(`/all`,auth, getSlots)
 
-slotRoute.patch('/update/:id',updateSlot)
+slotRoute.get(`/single/:id`,auth,getSingle)
 
-slotRoute.delete('/delete/:id',deleteSlot)
+slotRoute.post(`/create`,auth, doctorAuth, createSlot)
+
+slotRoute.patch('/update/:id',auth, doctorAuth, updateSlot)
+
+slotRoute.delete('/delete/:id',auth, doctorAuth, deleteSlot)
 
 module.exports = slotRoute
