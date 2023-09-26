@@ -1,10 +1,11 @@
 const  { StatusCodes }  = require('http-status-codes')
-
+const Appointment = require('../model/appointment.model')
 
 // get appointment
 const getAppointments = async (req,res) => {
     try {
-        res.status(StatusCodes.OK).json({ msg: "all appointment"})
+        let appointments = await Appointment.find({})
+        res.status(StatusCodes.OK).json({ length: appointments.length, appointments})
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: err.message })
     }
@@ -12,7 +13,12 @@ const getAppointments = async (req,res) => {
 
 const getSingleAppointment = async (req,res) => {
     try {
-        res.status(StatusCodes.OK).json({ msg: "get single appointment"})
+        let id = req.params.id
+        let appointment = await Appointment.findById({_id: id})
+            if(!appointment)
+            return res.status(StatusCodes.BAD_REQUEST).json({ msg: "appointment id not found"})
+
+        res.status(StatusCodes.OK).json({ appointment })
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: err.message })
     }
@@ -21,7 +27,12 @@ const getSingleAppointment = async (req,res) => {
 // add appointment
 const addAppointment = async (req,res) => {
     try {
-        res.status(StatusCodes.OK).json({ msg: "add appointment"})
+        let extUser = await Appointment.findOne({user_id: req.body.user_id})
+            if(extUser)
+                return res.status(StatusCodes.BAD_REQUEST).json({ msg: "user has already booked an appointment"})
+
+        let newApp = await Appointment.create(req.body)
+        res.status(StatusCodes.OK).json({ msg: "new appointment added successfully"})
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: err.message })
     }
@@ -30,7 +41,11 @@ const addAppointment = async (req,res) => {
 // update appointment
 const updateAppointment = async (req,res) => {
     try {
-        res.status(StatusCodes.OK).json({ msg: "update Appointment"})
+        let {app_date, app_status, confirm, isActive} = req.body
+        let id = req.params.id
+
+        await Appointment.findByIdAndUpdate({_id : id}, {app_date, app_status, confirm, isActive})
+        res.status(StatusCodes.OK).json({ msg: "Appointment details updated successfully"})
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: err.message })
     }
@@ -39,7 +54,15 @@ const updateAppointment = async (req,res) => {
 // delete appointment
 const deleteAppointment = async (req,res) => {
     try {
-        res.status(StatusCodes.OK).json({ msg: "delete appointment"})
+        let id = req.params.id
+
+        let extId = await Appointment.findById({_id: id})
+            if(!extId)
+                return res.status(StatusCodes.NOT_FOUND).json({msg: "Requested id not found"})
+
+        await Appointment.findByIdAndDelete({_id : id}) 
+        
+        res.status(StatusCodes.OK).json({ msg: "appointment delete successfully"})
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: err.message })
     }

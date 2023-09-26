@@ -7,7 +7,7 @@ const slotSchema = new mongoose.Schema({
      },
      slot_date: {
         type: Date,
-        default: Date.now()
+        default: new Date().toLocaleString()
      },
      slot_status: {
         type: Boolean,

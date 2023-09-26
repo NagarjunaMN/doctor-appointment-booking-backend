@@ -27,7 +27,18 @@ const getSingleService = async (req,res) => {
 // add service
 const addService = async (req,res) => {
     try {
-        res.status(StatusCodes.OK).json({ msg: "add service"})
+        const {name, desc, price, category, gender, doc_id} = req.body
+
+        const newData = await Service.create({
+            name,
+            desc,
+            price,
+            category,
+            gender,
+            doc_id
+        })
+
+        res.status(StatusCodes.OK).json({msg:"New service added successfully", service: newData})
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: err.message })
     }
@@ -36,7 +47,15 @@ const addService = async (req,res) => {
 // update service
 const updateService = async (req,res) => {
     try {
-        res.status(StatusCodes.OK).json({ msg: "update service"})
+        let id = req.params.id
+
+        let extData = await Service.findById({_id: id})
+            if(!extData)
+                return res.status(StatusCodes.NOT_FOUND).json({msg: "requested service id not found"})
+
+                await Service.findByIdAndUpdate({_id: id}, req.body)
+
+        res.status(StatusCodes.OK).json({ msg: "service updated successfully"})
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: err.message })
     }
@@ -45,7 +64,13 @@ const updateService = async (req,res) => {
 // delete service
 const deleteService = async (req,res) => {
     try {
-        res.status(StatusCodes.OK).json({ msg: "delete service"})
+        const id = req.params.id
+            let extSer = await Service.findById({_id: id})
+                if(!extSer)
+                    return res.status(StatusCodes.NOT_FOUND).json({msg: "requested service id not found"})
+            await Service.findByIdAndDelete({_id : id})
+
+        res.status(StatusCodes.OK).json({ msg: "service deleted successfully"})
     } catch (err) {
         res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: err.message })
     }
